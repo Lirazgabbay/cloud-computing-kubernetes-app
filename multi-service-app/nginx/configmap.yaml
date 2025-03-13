@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: stock-portfolio
+data:
+  nginx.conf: |
+    events {
+      worker_connections 1024;
+    }
+    http {
+      upstream stocks_backend {
+        server stocks:8000;
+      }
+      upstream capital_gains_backend {
+        server capital-gains:8080;
+      }
+      server {
+        listen 80;
+        location /stocks {
+          proxy_pass http://stocks_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          limit_except GET POST {
+              deny all;
+          }
+        }
+
+        location ~ ^/stocks/[^/]+$ {
+          proxy_pass http://stocks_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          limit_except GET DELETE PUT {
+              deny all;
+          }
+        }
+        
+        location ~ ^/stock-value/[^/]+$ {
+          proxy_pass http://stocks_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          limit_except GET {
+              deny all;
+          }
+        }
+
+        location /portfolio-value {
+          proxy_pass http://stocks_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          limit_except GET {
+              deny all;
+          }
+        }
+
+        location /kill {
+          proxy_pass http://stocks_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          limit_except GET {
+              deny all;
+          }
+        }
+
+        location /capital-gains {
+          proxy_pass http://capital_gains_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          limit_except GET {
+              deny all;
+          }
+        }
+      }
+    }

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stocks #this is the name of the deployment
+  namespace: stock-portfolio
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stock-app # this has to match the label of the pod
+  template:
+    metadata:
+      labels:
+        app: stock-app # this is the label of the pod
+    spec:
+      containers:
+      - name: stocks
+        image: stocks:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_NAME
+          value: "stocks"
+        - name: SERVICE_TYPE
+          value: "stocks"
+        - name: STOCK_SERVICE_PORT
+          value: "8000"
+        - name: MONGODB_URI
+          value: "mongodb://mongodb:27017/stocks"
